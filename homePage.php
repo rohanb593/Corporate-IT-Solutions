@@ -35,6 +35,14 @@
                             <span class="menu-text">View Items</span>
                         </a>
                     </li>
+
+                    <li data-content="dashboard">
+                        <a href="uploadPage.php">
+                            <i class="fas fa-upload"></i>
+                            <span class="menu-text">Upload</span>
+                        </a>
+
+                    </li>
                 
                     <li class="logout">
                         <a href="logout.php">
@@ -67,5 +75,21 @@
             </div>
         </main>
     </div>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.createElement('button');
+            
+            toggleBtn.className = 'sidebar-toggle';
+            toggleBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            toggleBtn.onclick = function() {
+                sidebar.classList.toggle('collapsed');
+            };
+            
+            sidebar.appendChild(toggleBtn);
+        });
+    </script>
 </body>
 </html>
