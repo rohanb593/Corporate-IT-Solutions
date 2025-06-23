@@ -64,9 +64,21 @@ try {
             throw new Exception("$fileName exceeds maximum file size (5MB)");
         }
 
-        if (!in_array($fileType, $allowedTypes)) {
-            throw new Exception("$fileName has invalid file type. Only images are allowed");
+        // In the file validation section, add:
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+        $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+
+        if (!in_array($fileExt, $allowedExtensions)) {
+            throw new Exception("$fileName has invalid file extension. Only JPG, PNG, and GIF are allowed");
         }
+
+        // Add image dimension validation if needed
+        $imageInfo = getimagesize($tmpName);
+        if (!$imageInfo) {
+            throw new Exception("$fileName is not a valid image file");
+        }
+
+        
 
         // Generate safe filename
         $fileExt = pathinfo($fileName, PATHINFO_EXTENSION);
@@ -91,6 +103,19 @@ try {
             'original' => $fileName,
             'saved' => $safeName
         ];
+    }
+
+    // Add this after successful upload to limit total files per user
+    $maxFilesPerUser = 10; // Keep last 10 files per user
+    if (count($mediaFiles) > $maxFilesPerUser) {
+        $filesToDelete = array_slice($mediaFiles, 0, count($mediaFiles) - $maxFilesPerUser);
+        foreach ($filesToDelete as $file) {
+            $oldFilePath = $uploadDir . $file['name'];
+            if (file_exists($oldFilePath)) {
+                unlink($oldFilePath);
+            }
+        }
+        $mediaFiles = array_slice($mediaFiles, -$maxFilesPerUser);
     }
 
     // Save metadata

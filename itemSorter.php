@@ -159,15 +159,46 @@ $result = $conn->query($sql);
                     
                     <aside class="image-slideshow">
                         <div class="slideshow-container">
-                            <div class="slide active">
-                                <img src="images/slide1.jpg" alt="IT Solution 1">
-                            </div>
-                            <div class="slide">
-                                <img src="images/slide2.jpg" alt="IT Solution 2">
-                            </div>
-                            <div class="slide">
-                                <img src="images/slide3.jpg" alt="IT Solution 3">
-                            </div>
+                            <?php
+                            // Get all uploaded images from all users
+                            $uploadDir = 'uploads/';
+                            $allImages = [];
+                            
+                            // Scan the uploads directory for image files
+                            if (file_exists($uploadDir)) {
+                                $files = scandir($uploadDir);
+                                foreach ($files as $file) {
+                                    if ($file !== '.' && $file !== '..' && !str_ends_with($file, '.json')) {
+                                        $filePath = $uploadDir . $file;
+                                        if (@getimagesize($filePath)) { // Check if it's an image
+                                            $allImages[] = $filePath;
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // If no uploaded images, use default slides
+                            if (empty($allImages)) {
+                                $allImages = [
+                                    'images/slide1.jpg',
+                                    'images/slide2.jpg',
+                                    'images/slide3.jpg'
+                                ];
+                            }
+                            
+                            // Display each image in the slideshow
+                            foreach ($allImages as $index => $image) {
+                                $activeClass = $index === 0 ? 'active' : '';
+                                echo '<div class="slide ' . $activeClass . '">';
+                                echo '<img src="' . htmlspecialchars($image) . '" alt="Uploaded media">';
+                                echo '</div>';
+                            }
+                            ?>
+                        </div>
+                        <div class="slideshow-nav">
+                            <?php for ($i = 0; $i < count($allImages); $i++): ?>
+                                <span class="slideshow-dot <?php echo $i === 0 ? 'active' : ''; ?>" data-index="<?php echo $i; ?>"></span>
+                            <?php endfor; ?>
                         </div>
                         <div class="video-container">
                             <video controls>
@@ -219,24 +250,30 @@ $result = $conn->query($sql);
     document.addEventListener('DOMContentLoaded', function() {
         // Auto-rotating slideshow
         const slides = document.querySelectorAll('.slide');
+        const dots = document.querySelectorAll('.slideshow-dot');
         let currentSlide = 0;
-        const slideInterval = 5000; // Change slide every 3 seconds
+        const slideInterval = 5000; // Change slide every 5 seconds
+        
+        function showSlide(index) {
+            // Hide all slides
+            slides.forEach(slide => slide.classList.remove('active'));
+            dots.forEach(dot => dot.classList.remove('active'));
+            
+            // Show the selected slide
+            slides[index].classList.add('active');
+            dots[index].classList.add('active');
+            currentSlide = index;
+        }
         
         function nextSlide() {
-            // Remove active class from current slide
-            slides[currentSlide].classList.remove('active');
-            
-            // Move to next slide (loop back to 0 if at end)
-            currentSlide = (currentSlide + 1) % slides.length;
-            
-            // Add active class to new current slide
-            slides[currentSlide].classList.add('active');
+            const nextIndex = (currentSlide + 1) % slides.length;
+            showSlide(nextIndex);
         }
         
         // Start the slideshow
         let slideTimer = setInterval(nextSlide, slideInterval);
         
-        // Pause slideshow when hovering (optional)
+        // Pause slideshow when hovering
         const slideshow = document.querySelector('.slideshow-container');
         slideshow.addEventListener('mouseenter', () => {
             clearInterval(slideTimer);
@@ -246,7 +283,15 @@ $result = $conn->query($sql);
             slideTimer = setInterval(nextSlide, slideInterval);
         });
         
-        // Your existing video control code
+        // Dot navigation
+        dots.forEach(dot => {
+            dot.addEventListener('click', function() {
+                const slideIndex = parseInt(this.getAttribute('data-index'));
+                showSlide(slideIndex);
+            });
+        });
+        
+        // Video control (existing code)
         const video = document.querySelector('.video-container video');
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
@@ -258,7 +303,7 @@ $result = $conn->query($sql);
         
         observer.observe(video);
     });
-    </script>
+    </script>2123
 
 
     
