@@ -29,12 +29,7 @@
                         </a>
                     </li>
                     
-                    <li data-content="View Items" class="active">
-                        <a href="../ItemSorterPage/itemSorter.php">
-                            <i class="fas fa-tasks"></i>
-                            <span class="menu-text">View Items</span>
-                        </a>
-                    </li>
+                    
 
                     <li data-content="dashboard">
                         <a href="../UploadPage/uploadPage.php">

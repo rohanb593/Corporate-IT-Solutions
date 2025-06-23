@@ -30,7 +30,7 @@ $conn->close();
 <html>
 <head>
     <title>Login</title>
-    <link rel="stylesheet" type="text/css" href="../login.css">
+    <link rel="stylesheet" type="text/css" href="login.css">
 </head>
 <body>
     <header>Corporate IT Solutions</header>

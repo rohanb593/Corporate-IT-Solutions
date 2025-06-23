@@ -36,42 +36,6 @@ $result = $conn->query($sql);
 <body>
     <div class="dashboard-container">
         <!-- Collapsible Sidebar -->
-
-        <aside class="sidebar" id="sidebar">
-            <nav class="sidebar-nav">
-                <ul>
-                    <li data-content="dashboard">
-                        <a href="../HomePage/homePage.php">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span class="menu-text">Dashboard</span>
-                        </a>
-                    </li>
-                    
-                    <li data-content="View Items" class="active">
-                        <a href="itemSorter.php">
-                            <i class="fas fa-tasks"></i>
-                            <span class="menu-text">View Items</span>
-                        </a>
-                    </li>
-
-                    <li data-content="dashboard">
-                        <a href="../UploadPage/uploadPage.php">
-                            <i class="fas fa-upload"></i>
-                            <span class="menu-text">Upload</span>
-                        </a>
-
-                    </li>
-                
-                    <li class="logout">
-                        <a href="../HomePage/logout.php">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span class="menu-text">Logout</span>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </aside>
-        
         <main class="main-content">
             <header>
                 <h1>Corporate IT Solutions - Inventory</h1>
