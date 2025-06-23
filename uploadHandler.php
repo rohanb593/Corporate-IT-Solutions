@@ -2,7 +2,6 @@
 header('Content-Type: application/json');
 session_start();
 
-// Check authentication
 if (!isset($_SESSION['username'])) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit();
@@ -10,12 +9,27 @@ if (!isset($_SESSION['username'])) {
 
 // Configuration
 $uploadDir = 'uploads/';
-$allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'video/mp4', 'video/webm'];
-$maxFileSize = 50 * 1024 * 1024; // 50MB
+$allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+$maxFileSize = 5 * 1024 * 1024; // 5MB
+$maxTotalFiles = 5;
 
 // Create upload directory if needed
 if (!file_exists($uploadDir)) {
     mkdir($uploadDir, 0755, true);
+}
+
+// Check existing files
+$metadataFile = $uploadDir . session_id() . '_metadata.json';
+$mediaFiles = [];
+
+if (file_exists($metadataFile)) {
+    $mediaFiles = json_decode(file_get_contents($metadataFile), true) ?: [];
+}
+
+// Check if user has reached max files
+if (count($mediaFiles) >= $maxTotalFiles) {
+    echo json_encode(['success' => false, 'message' => 'You have reached the maximum number of files (5)']);
+    exit();
 }
 
 $response = ['success' => false, 'message' => '', 'files' => []];
@@ -29,8 +43,11 @@ try {
         throw new Exception('No files uploaded');
     }
 
-    $title = $_POST['title'] ?? 'Untitled';
-    $description = $_POST['description'] ?? '';
+    // Check if new files would exceed limit
+    $newFileCount = count($_FILES['mediaFiles']['tmp_name']);
+    if ((count($mediaFiles) + $newFileCount) > $maxTotalFiles) {
+        throw new Exception("Uploading these files would exceed your limit of $maxTotalFiles files");
+    }
 
     foreach ($_FILES['mediaFiles']['tmp_name'] as $i => $tmpName) {
         $fileName = $_FILES['mediaFiles']['name'][$i];
@@ -44,11 +61,11 @@ try {
         }
 
         if ($fileSize > $maxFileSize) {
-            throw new Exception("$fileName exceeds maximum file size");
+            throw new Exception("$fileName exceeds maximum file size (5MB)");
         }
 
         if (!in_array($fileType, $allowedTypes)) {
-            throw new Exception("$fileName has invalid file type");
+            throw new Exception("$fileName has invalid file type. Only images are allowed");
         }
 
         // Generate safe filename
@@ -61,15 +78,23 @@ try {
             throw new Exception("Failed to save $fileName");
         }
 
-        // Here you would typically save to database
-        // saveToDatabase($title, $description, $safeName, $fileType);
+        // Add to metadata
+        $mediaFiles[] = [
+            'name' => $safeName,
+            'original' => $fileName,
+            'type' => $fileType,
+            'size' => $fileSize,
+            'uploaded' => date('Y-m-d H:i:s')
+        ];
 
         $response['files'][] = [
             'original' => $fileName,
-            'saved' => $safeName,
-            'type' => strpos($fileType, 'image/') === 0 ? 'image' : 'video'
+            'saved' => $safeName
         ];
     }
+
+    // Save metadata
+    file_put_contents($metadataFile, json_encode($mediaFiles));
 
     $response['success'] = true;
     $response['message'] = count($_FILES['mediaFiles']['name']) . ' files uploaded successfully';

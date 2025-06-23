@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
+    const MAX_FILES = 5;
     const uploadForm = document.getElementById('uploadForm');
     const fileInput = document.getElementById('mediaFiles');
     const fileInfo = document.getElementById('fileInfo');
@@ -12,30 +13,42 @@ document.addEventListener('DOMContentLoaded', function() {
     fileInput.addEventListener('change', function() {
         previewContainer.innerHTML = '';
         
+        if (this.files.length > MAX_FILES) {
+            showMessage(`You can upload a maximum of ${MAX_FILES} files`, 'error');
+            this.value = '';
+            fileInfo.textContent = `No files selected (0/${MAX_FILES})`;
+            return;
+        }
+        
         if (this.files.length > 0) {
-            fileInfo.textContent = `${this.files.length} file(s) selected`;
+            fileInfo.textContent = `${this.files.length} file(s) selected (${this.files.length}/${MAX_FILES})`;
             
             // Create previews
             Array.from(this.files).forEach(file => {
+                if (!file.type.startsWith('image/')) {
+                    showMessage('Only image files are allowed', 'error');
+                    return;
+                }
+                
                 const previewItem = document.createElement('div');
                 previewItem.className = 'preview-item';
                 
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    if (file.type.startsWith('image/')) {
-                        previewItem.innerHTML = `<img src="${e.target.result}" alt="${file.name}">`;
-                    } else if (file.type.startsWith('video/')) {
-                        previewItem.innerHTML = `
-                            <video controls>
-                                <source src="${e.target.result}" type="${file.type}">
-                            </video>
-                        `;
-                    }
+                    previewItem.innerHTML = `<img src="${e.target.result}" alt="${file.name}">`;
                     
                     const removeBtn = document.createElement('button');
                     removeBtn.className = 'remove-btn';
                     removeBtn.innerHTML = '<i class="fas fa-times"></i>';
-                    removeBtn.onclick = () => previewItem.remove();
+                    removeBtn.onclick = () => {
+                        previewItem.remove();
+                        // Update file count display
+                        const remainingFiles = Array.from(fileInput.files).filter(f => f.name !== file.name);
+                        const dataTransfer = new DataTransfer();
+                        remainingFiles.forEach(f => dataTransfer.items.add(f));
+                        fileInput.files = dataTransfer.files;
+                        fileInfo.textContent = `${remainingFiles.length} file(s) selected (${remainingFiles.length}/${MAX_FILES})`;
+                    };
                     
                     previewItem.appendChild(removeBtn);
                     previewContainer.appendChild(previewItem);
@@ -43,9 +56,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.readAsDataURL(file);
             });
         } else {
-            fileInfo.textContent = 'No files selected';
+            fileInfo.textContent = `No files selected (0/${MAX_FILES})`;
         }
     });
+
 
     // Form submission handler
     uploadForm.addEventListener('submit', function(e) {

@@ -1,9 +1,16 @@
 <?php
 session_start();
-// Redirect to login if not authenticated
 if (!isset($_SESSION['username'])) {
     header("Location: loginDisplay.php");
     exit();
+}
+
+// Get existing media files
+$mediaFiles = [];
+$metadataFile = 'uploads/' . session_id() . '_metadata.json';
+
+if (file_exists($metadataFile)) {
+    $mediaFiles = json_decode(file_get_contents($metadataFile), true) ?: [];
 }
 ?>
 
@@ -74,20 +81,10 @@ if (!isset($_SESSION['username'])) {
                     <form id="uploadForm" enctype="multipart/form-data">
                         <div class="form-group">
                             <label for="mediaFiles">
-                                <i class="fas fa-folder-open"></i> Select Files
+                                <i class="fas fa-folder-open"></i> Select Files (Max 5)
                             </label>
-                            <input type="file" id="mediaFiles" name="mediaFiles[]" multiple accept="image/*,video/*">
-                            <div class="file-info" id="fileInfo">No files selected</div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="title"><i class="fas fa-heading"></i> Title</label>
-                            <input type="text" id="title" name="title" placeholder="Enter media title">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="description"><i class="fas fa-align-left"></i> Description</label>
-                            <textarea id="description" name="description" placeholder="Enter description"></textarea>
+                            <input type="file" id="mediaFiles" name="mediaFiles[]" multiple accept="image/*">
+                            <div class="file-info" id="fileInfo">No files selected (0/5)</div>
                         </div>
                         
                         <button type="submit" class="upload-btn">
@@ -103,14 +100,60 @@ if (!isset($_SESSION['username'])) {
                     <div class="preview-container" id="previewContainer"></div>
                     
                     <div class="message" id="message"></div>
+
+                    <!-- Media Management Section -->
+                    <h3 style="margin-top: 30px;"><i class="fas fa-images"></i> Your Uploaded Media</h3>
+                    <div class="media-management">
+                        <?php if (!empty($mediaFiles)): ?>
+                            <div class="media-grid">
+                                <?php foreach ($mediaFiles as $index => $file): ?>
+                                    <div class="media-item" data-filename="<?php echo htmlspecialchars($file['name']); ?>">
+                                        <img src="uploads/<?php echo htmlspecialchars($file['name']); ?>" alt="Uploaded media">
+                                        <div class="media-actions">
+                                            <button class="delete-btn" data-filename="<?php echo htmlspecialchars($file['name']); ?>">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        <?php else: ?>
+                            <p>No media files uploaded yet.</p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
 
     <script src="uploadPage.js"></script>
+    <script>
+        // Handle delete actions
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filename = this.getAttribute('data-filename');
+                if (confirm('Are you sure you want to delete this file?')) {
+                    fetch('deleteMedia.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: `filename=${encodeURIComponent(filename)}`
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload(); // Refresh to show updated list
+                        } else {
+                            alert('Error deleting file: ' + data.message);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 
-
+    <!-- Include sidebar toggle script -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.getElementById('sidebar');
@@ -123,8 +166,9 @@ if (!isset($_SESSION['username'])) {
             };
             
             sidebar.appendChild(toggleBtn);
-            });
+        });
     </script>
 
     
 </body>
+</html>
